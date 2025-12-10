@@ -1,0 +1,38 @@
+---
+- name: Create application directory
+  file:
+    path: "{{ app_dir }}"
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+    mode: '0755'
+
+- name: Copy application files
+  copy:
+    src: app/
+    dest: "{{ app_dir }}/app/"
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+
+- name: Template docker-compose file
+  template:
+    src: docker-compose.yml.j2
+    dest: "{{ docker_compose_path }}"
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+
+- name: "Deploy and build application with version {{ current_version }}"
+  community.docker.docker_compose:
+    project_src: "{{ app_dir }}"
+    build: yes
+  become: yes
+  become_user: "{{ app_user }}"
+
+- name: "Wait for health check to pass for version {{ current_version }}"
+  uri:
+    url: "{{ health_check_url }}"
+    status_code: 200
+  register: health_check_result
+  until: health_check_result.status == 200
+  retries: 10
+  delay: 5

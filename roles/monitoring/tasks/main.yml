@@ -1,0 +1,37 @@
+---
+- name: "Download and unpack Node Exporter"
+  unarchive:
+    src: "https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz"
+    dest: /usr/local/bin
+    remote_src: yes
+    extra_opts:
+      - "--strip-components=1"
+      - "node_exporter-{{ node_exporter_version }}.linux-amd64/node_exporter"
+  become: yes
+
+- name: "Create Node Exporter systemd service file"
+  copy:
+    dest: /etc/systemd/system/node_exporter.service
+    content: |
+      [Unit]
+      Description=Node Exporter
+      Wants=network-online.target
+      After=network-online.target
+
+      [Service]
+      User=root
+      Group=root
+      Type=simple
+      ExecStart=/usr/local/bin/node_exporter
+
+      [Install]
+      WantedBy=multi-user.target
+  become: yes
+  notify: Reload systemd and start Node Exporter
+
+- name: "Start Node Exporter service"
+  systemd:
+    name: node_exporter
+    enabled: yes
+    state: started
+  become: yes

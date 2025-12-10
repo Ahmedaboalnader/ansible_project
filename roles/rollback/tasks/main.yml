@@ -1,0 +1,36 @@
+---
+- name: Check if a previous version exists
+  fail:
+    msg: "No previous_version is defined. Cannot roll back."
+  when: previous_version is not defined or previous_version == ""
+
+- name: "Log rollback to version {{ previous_version }}"
+  debug:
+    msg: "Rolling back to previous version: {{ previous_version }}"
+
+- name: Set current_version to previous_version for rollback
+  set_fact:
+    current_version: "{{ previous_version }}"
+
+- name: "Template docker-compose for rollback to {{ current_version }}"
+  template:
+    src: docker-compose.yml.j2
+    dest: "{{ docker_compose_path }}"
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+
+- name: "Deploy and build application with rolled-back version {{ current_version }}"
+  community.docker.docker_compose:
+    project_src: "{{ app_dir }}"
+    build: yes
+  become: yes
+  become_user: "{{ app_user }}"
+
+- name: "Wait for health check to pass for rolled-back version {{ current_version }}"
+  uri:
+    url: "{{ health_check_url }}"
+    status_code: 200
+  register: health_check_result
+  until: health_check_result.status == 200
+  retries: 10
+  delay: 5

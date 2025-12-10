@@ -1,0 +1,38 @@
+---
+- name: Update apt cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  become: yes
+
+- name: Install common packages
+  apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - software-properties-common
+      - python3-pip
+      - virtualenv
+      - python3-setuptools
+      - ufw
+    state: present
+  become: yes
+
+- name: Create the application user
+  user:
+    name: "{{ app_user }}"
+    shell: /bin/bash
+    create_home: yes
+  become: yes
+
+- name: Allow SSH connections
+  ufw:
+    rule: allow
+    name: OpenSSH
+  become: yes
+
+- name: Enable UFW
+  ufw:
+    state: enabled
+  become: yes

@@ -1,0 +1,5 @@
+---
+- name: Deploy application to web servers
+  hosts: web
+  roles:
+    - role: app_deploy

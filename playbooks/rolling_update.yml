@@ -1,0 +1,51 @@
+---
+- name: Perform a zero-downtime rolling update
+  hosts: web
+  serial: 1
+  vars_prompt:
+    - name: new_version
+      prompt: "Enter the new version to deploy (e.g., 2.0.0)"
+      private: no
+
+  tasks:
+    - name: Set version variables
+      set_fact:
+        previous_version: "{{ current_version }}"
+        current_version: "{{ new_version }}"
+
+    - name: "Start rolling update for {{ inventory_hostname }}"
+      block:
+        - name: "Deploy new version {{ current_version }}"
+          include_role:
+            name: app_deploy
+
+        - name: "Health check passed for {{ inventory_hostname }}"
+          debug:
+            msg: "Deployment of {{ current_version }} on {{ inventory_hostname }} was successful."
+
+      rescue:
+        - name: "Deployment failed on {{ inventory_hostname }}! Rolling back."
+          debug:
+            msg: "Health check failed or another error occurred. Starting rollback."
+
+        - name: Set deploy_failed flag
+          set_fact:
+            deploy_failed: true
+
+        - name: "Trigger rollback on {{ inventory_hostname }}"
+          include_role:
+            name: rollback
+
+- name: Finalize update
+  hosts: lb
+  gather_facts: no
+  tasks:
+    - name: "Check if any host failed during the update"
+      fail:
+        msg: "The rolling update failed on at least one host. The deployment has been rolled back on the failed nodes."
+      when: hostvars[item]['deploy_failed'] is defined and hostvars[item]['deploy_failed']
+      with_items: "{{ groups['web'] }}"
+
+    - name: "Refresh Nginx config after successful update"
+      debug:
+        msg: "All web nodes updated successfully. Nginx config is already pointing to all nodes."

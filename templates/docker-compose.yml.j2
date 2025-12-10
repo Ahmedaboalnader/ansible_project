@@ -1,0 +1,19 @@
+version: '3.7'
+services:
+  web:
+    image: "{{ image_name }}:{{ current_version }}"
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    ports:
+      - "{{ app_port }}:5000"
+    environment:
+      - APP_VERSION={{ current_version }}
+      - DB_PASSWORD={{ db_password }}
+      - API_KEY={{ api_key }}
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5

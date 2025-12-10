@@ -1,0 +1,5 @@
+---
+- name: Rollback application to the previous version
+  hosts: web
+  roles:
+    - role: rollback

@@ -1,0 +1,23 @@
+---
+- name: Provision all servers
+  hosts: all
+  vars_files:
+    - ../group_vars/all.yml
+    - ../group_vars/vault.yml
+  roles:
+    - role: common
+    - role: monitoring
+
+- name: Provision web servers
+  hosts: web
+  vars_files:
+    - ../group_vars/web.yml
+  roles:
+    - role: docker
+
+- name: Provision load balancer
+  hosts: lb
+  vars_files:
+    - ../group_vars/lb.yml
+  roles:
+    - role: nginx_lb
