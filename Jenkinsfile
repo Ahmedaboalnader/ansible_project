@@ -3,9 +3,9 @@ pipeline {
 
     environment {
         // This would be your registry URL
-        DOCKER_REGISTRY = 'ahmedmostafa22/ansible_project:latest'
+        DOCKER_REGISTRY = 'ahmedmostafa22'
         // This would be your app name
-        APP_NAME = 'my-app'
+        APP_NAME = 'ansible_project'
         // This is where ansible is installed
         ANSIBLE_HOME = tool 'ansible'
     }
