@@ -27,18 +27,23 @@ pipeline {
         }
 
         stage('Run Ansible Rolling Update') {
-            steps {
-                sh '''
-                # Fix Ansible temp folder for Jenkins user
-                export ANSIBLE_LOCAL_TEMP=/tmp/ansible_tmp
-                export ANSIBLE_REMOTE_TEMP=/tmp/ansible_tmp
-                mkdir -p /tmp/ansible_tmp
+    steps {
+        sh '''
+        # Fix TMP for Ansible
+        export ANSIBLE_LOCAL_TEMP=/tmp/ansible_tmp
+        export ANSIBLE_REMOTE_TEMP=/tmp/ansible_tmp
+        mkdir -p /tmp/ansible_tmp
 
-                # Run playbook
-                ansible-playbook playbooks/rolling_update.yml --extra-vars "new_version=2.0.0"
-                '''
-            }
-        }
+        # Fix SSH key permissions for Vagrant keys
+        chmod 600 .vagrant/machines/web1/virtualbox/private_key || true
+        chmod 600 .vagrant/machines/web2/virtualbox/private_key || true
+        chmod 600 .vagrant/machines/lb1/virtualbox/private_key || true
+
+        # Run playbook
+        ansible-playbook playbooks/rolling_update.yml --extra-vars "new_version=2.0.0"
+        '''
+    }
+}
     }
 }
 
