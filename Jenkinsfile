@@ -26,17 +26,19 @@ pipeline {
         }
 
         stage('Run Ansible Rolling Update') {
-            steps {
-                sh '''
-                export ANSIBLE_LOCAL_TEMP=/tmp/ansible_tmp
-                mkdir -p /tmp/ansible_tmp
-                chmod 777 /tmp/ansible_tmp
+    steps {
+        sh '''
+        export ANSIBLE_LOCAL_TEMP=.ansible_tmp
+        export ANSIBLE_REMOTE_TMP=.ansible_tmp_remote
 
-                ${ANSIBLE_HOME}/bin/ansible-playbook playbooks/rolling_update.yml --extra-vars "new_version=2.0.0"
-                '''
-            }
-        }
+        mkdir -p .ansible_tmp
+        mkdir -p .ansible_tmp_remote
+
+        ${ANSIBLE_HOME}/bin/ansible-playbook playbooks/rolling_update.yml --extra-vars "new_version=2.0.0"
+        '''
     }
+}
+}
 }
 
 
