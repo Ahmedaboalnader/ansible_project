@@ -4,42 +4,44 @@ pipeline {
     environment {
         DOCKER_REGISTRY = 'ahmedmostafa22'
         APP_NAME = 'ansible_project'
-        ANSIBLE_HOME = tool 'ansible'
     }
 
     stages {
+
         stage('Build Docker Image') {
             steps {
                 script {
-                    def newVersion = "2.0.0"
-                    sh "docker build -t ${DOCKER_REGISTRY}/${APP_NAME}:${newVersion} roles/app_deploy/files/app/"
+                    def newVersion = "2.0.0"  
+                    sh """
+                        docker build -t ${DOCKER_REGISTRY}/${APP_NAME}:${newVersion} \
+                        roles/app_deploy/files/app/
+                    """
                 }
             }
         }
 
         stage('Push to Registry') {
             steps {
-                script {
-                    echo "Simulating push to registry. In a real pipeline, this would be enabled."
-                }
+                echo "Simulating push to registry. In a real pipeline, this would be enabled."
             }
         }
 
         stage('Run Ansible Rolling Update') {
-    steps {
-        sh '''
-        export ANSIBLE_LOCAL_TEMP=.ansible_tmp
-        export ANSIBLE_REMOTE_TMP=.ansible_tmp_remote
+            steps {
+                sh '''
+                # Fix Ansible temp folder for Jenkins user
+                export ANSIBLE_LOCAL_TEMP=/tmp/ansible_tmp
+                export ANSIBLE_REMOTE_TEMP=/tmp/ansible_tmp
+                mkdir -p /tmp/ansible_tmp
 
-        mkdir -p .ansible_tmp
-        mkdir -p .ansible_tmp_remote
-
-        ${ANSIBLE_HOME}/bin/ansible-playbook playbooks/rolling_update.yml --extra-vars "new_version=2.0.0"
-        '''
+                # Run playbook
+                ansible-playbook playbooks/rolling_update.yml --extra-vars "new_version=2.0.0"
+                '''
+            }
+        }
     }
 }
-}
-}
+
 
 
 
