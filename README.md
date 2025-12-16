@@ -1,4 +1,4 @@
-![App Screenshot](assets/app_screenshot.png)
+![App Screenshot](web.png)
 
 # Ansible Production-Grade Local Environment
 
