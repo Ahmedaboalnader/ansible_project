@@ -35,14 +35,6 @@ pipeline {
   }
 }
 
-stage('Deploy via Ansible') {
-    steps {
-        sshagent(['vagrant_private_key_credential_id']) {
-            sh 'ansible-playbook playbooks/rolling_update.yml --extra-vars new_version=v13'
-        }
-    }
-}
-
 
 stage('Deploy via Ansible') {
   steps {
