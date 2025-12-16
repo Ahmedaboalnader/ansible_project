@@ -35,6 +35,14 @@ pipeline {
   }
 }
 
+tsage('chick pass') {
+  steps {
+    sh """
+      chmod 600 .vagrant/machines/*/virtualbox/private_key
+    """
+  }
+}
+
 stage('Deploy via Ansible') {
   steps {
     withCredentials([string(credentialsId: 'ansible-vault-pass', variable: 'VAULT_PASS')]) {
