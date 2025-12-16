@@ -23,16 +23,28 @@
 
 - name: Add app user to the docker group
   user:
-    name: "{{ app_user }}"
+    name: "{{ app_user | default('appuser') }}"
     groups: docker
     append: yes
   become: yes
 
-- name: Install Docker Compose
-  pip:
-    name: docker-compose
-    executable: pip3
-  become: yes
+# - name: Upgrade cryptography package
+#   pip:
+#     name: cryptography
+#     state: latest
+#   become: yes
+
+# - name: Install Docker Compose
+#   pip:
+#     name: docker-compose
+#     executable: pip3
+#   become: yes
+
+- name: Check docker compose plugin
+  command: docker compose version
+  register: compose_result
+  changed_when: false
+
 
 - name: Start and enable Docker service
   systemd:

@@ -6,13 +6,13 @@ app_user: appuser
 app_dir: "/home/{{ app_user }}/{{ project_name }}"
 
 # Docker-related variables
-docker_registry: "ahmedmostafa22" # <-- غير هذا الإسم باسم المستخدم الخاص بك على دوكر هب
-image_name: "{{ ahmedmostafa22 }}/{{ ansible_project }}"
+docker_registry: "ahmedmostafa22" 
+image_name: "{{ docker_registry }}/{{ project_name }}"
 
 # Application versioning
 # These would typically be updated by a CI/CD pipeline
-current_version: "1.0.0"
+current_version: "4.0.0"
 previous_version: ""
 
-# Monitoring
+
 node_exporter_version: "1.3.1"

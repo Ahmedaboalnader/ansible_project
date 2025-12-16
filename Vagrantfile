@@ -9,6 +9,7 @@ Vagrant.configure("2") do |config|
   config.vm.define "lb1" do |lb|
     lb.vm.hostname = "lb1"
     lb.vm.network "private_network", ip: "192.168.56.10"
+    lb.vm.network "forwarded_port", guest: 80, host: 8082
   end
 
   config.vm.define "web1" do |web1|

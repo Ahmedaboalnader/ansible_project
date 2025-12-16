@@ -7,7 +7,20 @@
       prompt: "Enter the new version to deploy (e.g., 2.0.0)"
       private: no
 
+  pre_tasks:
+    - name: Load group variables
+      include_vars: "{{ item }}"
+      with_items:
+        - "{{ playbook_dir }}/../group_vars/all.yml"
+        - "{{ playbook_dir }}/../group_vars/web.yml"
+        - "{{ playbook_dir }}/../group_vars/vault.yml"
+
   tasks:
+    - name: Debug become_flags
+      debug:
+        var: ansible_become_flags
+      ignore_errors: true
+
     - name: Set version variables
       set_fact:
         previous_version: "{{ current_version }}"

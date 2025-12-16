@@ -22,11 +22,10 @@
     group: "{{ app_user }}"
 
 - name: "Deploy and build application with version {{ current_version }}"
-  community.docker.docker_compose:
+  community.docker.docker_compose_v2:
     project_src: "{{ app_dir }}"
-    build: yes
+    build: "always"
   become: yes
-  become_user: "{{ app_user }}"
 
 - name: "Wait for health check to pass for version {{ current_version }}"
   uri:

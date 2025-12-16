@@ -1,99 +1,61 @@
 pipeline {
-    agent any
+  agent any
 
-    environment {
-        DOCKER_REGISTRY = 'ahmedmostafa22'
-        APP_NAME = 'ansible_project'
+  environment {
+    DOCKER_REGISTRY = 'ahmedmostafa22'
+    APP_NAME = 'ansible_project'     // choose the registry repo name you want
+    IMAGE_TAG = "v${env.BUILD_ID}"
+    ANSIBLE_PLAYBOOK = "playbooks/rolling_update.yml"
+  }
+
+  stages {
+    stage('Checkout') {
+      steps {
+        checkout scm
+      }
     }
 
-    stages {
+    stage('Build Image') {
+      steps {
+        sh """
+          docker build -t ${DOCKER_REGISTRY}/${APP_NAME}:${IMAGE_TAG} roles/app_deploy/files/app/
+        """
+      }
+    }
 
-        stage('Build Docker Image') {
-            steps {
-                script {
-                    def newVersion = "2.0.0"  
-                    sh """
-                        docker build -t ${DOCKER_REGISTRY}/${APP_NAME}:${newVersion} \
-                        roles/app_deploy/files/app/
-                    """
-                }
-            }
+    stage('Login to Registry & Push') {
+      steps {
+        withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+          sh """
+            echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+            docker push ${DOCKER_REGISTRY}/${APP_NAME}:${IMAGE_TAG}
+          """
         }
+      }
+    }
 
-        stage('Push to Registry') {
-            steps {
-                echo "Simulating push to registry. In a real pipeline, this would be enabled."
-            }
+    stage('Deploy via Ansible') {
+      steps {
+        withCredentials([string(credentialsId: 'ansible-vault-pass', variable: 'VAULT_PASS')]) {
+          sh '''
+            # optional: set ansible temp dirs if you saw permission issues
+            export ANSIBLE_LOCAL_TEMP=/tmp/ansible_tmp
+            export ANSIBLE_REMOTE_TEMP=/tmp/ansible_tmp
+            mkdir -p /tmp/ansible_tmp
+
+            # run the rolling update; pass new_version from the built image tag
+            ansible-playbook ${ANSIBLE_PLAYBOOK} --extra-vars "new_version=${IMAGE_TAG}" --ask-vault-pass <<EOF
+$VAULT_PASS
+EOF
+          '''
         }
-
-        stage('Run Ansible Rolling Update') {
-    steps {
-        sh '''
-        # Fix TMP for Ansible
-        export ANSIBLE_LOCAL_TEMP=/tmp/ansible_tmp
-        export ANSIBLE_REMOTE_TEMP=/tmp/ansible_tmp
-        mkdir -p /tmp/ansible_tmp
-
-        # Fix SSH key permissions for Vagrant keys
-        chmod 600 .vagrant/machines/web1/virtualbox/private_key || true
-        chmod 600 .vagrant/machines/web2/virtualbox/private_key || true
-        chmod 600 .vagrant/machines/lb1/virtualbox/private_key || true
-
-        # Run playbook
-        ansible-playbook playbooks/rolling_update.yml --extra-vars "new_version=2.0.0"
-        '''
+      }
     }
-}
+  }
+
+  post {
+    failure {
+      mail to: 'you@example.com', subject: "Build failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}", body: "See Jenkins for details"
     }
+  }
 }
-
-
-
-
-
-// pipeline {
-//     agent any
-
-//     environment {
-//         // This would be your registry URL
-//         DOCKER_REGISTRY = 'ahmedmostafa22'
-//         // This would be your app name
-//         APP_NAME = 'ansible_project'
-//         // This is where ansible is installed
-//         ANSIBLE_HOME = tool 'ansible'
-//     }
-
-//     stages {
-//         stage('Build Docker Image') {
-//             steps {
-//                 script {
-//                     // Get the new version, e.g., from a tag or build number
-//                     def newVersion = "2.0.0" // In a real pipeline, this would be dynamic
-//                     sh "docker build -t ${DOCKER_REGISTRY}/${APP_NAME}:${newVersion} roles/app_deploy/files/app/"
-//                 }
-//             }
-//         }
-
-//         stage('Push to Registry') {
-//             steps {
-//                 script {
-//                     // You would configure credentials for your registry
-//                     // withDockerRegistry([url: "https://${DOCKER_REGISTRY}", credentialsId: 'docker-registry-credentials']) {
-//                     //     sh "docker push ${DOCKER_REGISTRY}/${APP_NAME}:${newVersion}"
-//                     }
-//                     echo "Simulating push to registry. In a real pipeline, this would be enabled."
-//                 }
-//             }
-//         }
-
-//         stage('Run Ansible Rolling Update') {
-//             steps {
-//                 // This assumes your Jenkins agent has SSH access to the Ansible control node
-//                 // and the necessary credentials to connect to the target VMs.
-//                 sh '''
-//                 ansible-playbook playbooks/rolling_update.yml --extra-vars "new_version=2.0.0"
-//                 '''
-//             }
-//         }
-//     }
-// }

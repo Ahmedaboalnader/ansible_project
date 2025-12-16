@@ -14,7 +14,7 @@
 
 - name: "Template docker-compose for rollback to {{ current_version }}"
   template:
-    src: docker-compose.yml.j2
+    src: ../../app_deploy/templates/docker-compose.yml.j2
     dest: "{{ docker_compose_path }}"
     owner: "{{ app_user }}"
     group: "{{ app_user }}"
@@ -24,7 +24,6 @@
     project_src: "{{ app_dir }}"
     build: yes
   become: yes
-  become_user: "{{ app_user }}"
 
 - name: "Wait for health check to pass for rolled-back version {{ current_version }}"
   uri:

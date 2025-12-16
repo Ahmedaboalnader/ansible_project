@@ -1,4 +1,10 @@
 ---
+- name: Configure DNS
+  lineinfile:
+    path: /etc/resolv.conf
+    line: "nameserver 8.8.8.8"
+  become: yes
+
 - name: Update apt cache
   apt:
     update_cache: yes
