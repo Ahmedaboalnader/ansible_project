@@ -56,6 +56,8 @@ stage('Deploy via Ansible') {
 
         # ensure temp key is safe and usable
         chmod 600 "$VAGRANT_KEY" || true
+        # also ensure any .vagrant private keys in the workspace are secure (prevents SSH from rejecting them)
+        chmod 600 .vagrant/machines/*/virtualbox/private_key || true
 
         # run ansible using the Jenkins-provided private key (avoids relying on .vagrant paths)
         ansible-playbook "$ANSIBLE_PLAYBOOK" --extra-vars "new_version=$IMAGE_TAG" --vault-password-file="$vaultfile" --private-key "$VAGRANT_KEY"
