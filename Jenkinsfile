@@ -38,21 +38,28 @@ pipeline {
 
 stage('Deploy via Ansible') {
   steps {
-    withCredentials([string(credentialsId: 'ansible-vault-pass', variable: 'VAULT_PASS')]) {
+    // Use both Vault secret and an SSH private key stored in Jenkins credentials
+    withCredentials([
+      string(credentialsId: 'ansible-vault-pass', variable: 'VAULT_PASS'),
+      sshUserPrivateKey(credentialsId: 'vagrantsshkey', keyFileVariable: 'VAGRANT_KEY', usernameVariable: 'VAGRANT_USER')
+    ]) {
       sh '''
         set -e
         export ANSIBLE_LOCAL_TEMP=/tmp/ansible_tmp
         export ANSIBLE_REMOTE_TEMP=/tmp/ansible_tmp
         mkdir -p /tmp/ansible_tmp
+
+        # vault file (temporary)
         vaultfile=$(mktemp)
         echo "$VAULT_PASS" > "$vaultfile"
         chmod 600 "$vaultfile"
-        # Ensure Vagrant private keys have strict permissions so SSH will accept them
-        chmod 600 .vagrant/machines/web1/virtualbox/private_key || true
-        chmod 600 .vagrant/machines/web2/virtualbox/virtualbox/private_key || true
-        chmod 600 .vagrant/machines/lb1/virtualbox/private_key || true
 
-        ansible-playbook "$ANSIBLE_PLAYBOOK" --extra-vars "new_version=$IMAGE_TAG" --vault-password-file="$vaultfile"
+        # ensure temp key is safe and usable
+        chmod 600 "$VAGRANT_KEY" || true
+
+        # run ansible using the Jenkins-provided private key (avoids relying on .vagrant paths)
+        ansible-playbook "$ANSIBLE_PLAYBOOK" --extra-vars "new_version=$IMAGE_TAG" --vault-password-file="$vaultfile" --private-key "$VAGRANT_KEY"
+
         rm -f "$vaultfile"
       '''
     }
