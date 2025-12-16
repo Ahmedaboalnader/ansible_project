@@ -1,3 +1,5 @@
+![App Screenshot](assets/app_screenshot.png)
+
 # Ansible Production-Grade Local Environment
 
 This project creates a complete, production-style local environment using Vagrant and Ansible. It simulates a real-world setup with a load balancer and multiple web servers running a Dockerized application, and demonstrates best practices like zero-downtime rolling updates and automatic rollbacks.
