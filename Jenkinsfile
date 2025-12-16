@@ -47,6 +47,11 @@ stage('Deploy via Ansible') {
         vaultfile=$(mktemp)
         echo "$VAULT_PASS" > "$vaultfile"
         chmod 600 "$vaultfile"
+        # Ensure Vagrant private keys have strict permissions so SSH will accept them
+        chmod 600 .vagrant/machines/web1/virtualbox/private_key || true
+        chmod 600 .vagrant/machines/web2/virtualbox/virtualbox/private_key || true
+        chmod 600 .vagrant/machines/lb1/virtualbox/private_key || true
+
         ansible-playbook "$ANSIBLE_PLAYBOOK" --extra-vars "new_version=$IMAGE_TAG" --vault-password-file="$vaultfile"
         rm -f "$vaultfile"
       '''
