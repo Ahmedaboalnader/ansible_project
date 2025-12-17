@@ -1,4 +1,6 @@
 ![App Screenshot](web.png)
+
+![diagram](diagram.jpg)
 ![video](video.webm)
 
 # Ansible Production-Grade Local Environment
